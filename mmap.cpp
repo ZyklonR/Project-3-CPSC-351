@@ -11,7 +11,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
 /* Make sure the command line is correct */
-if (argc < 2)
+if (argc < 3)
 {
 cout << "FILE NAME missing\n";
 exit(1);
@@ -37,14 +37,20 @@ if (stat(argv[1], &stats) == 0)
 cout << endl << "file size " << stats.st_size;
 else
 cout << "Unable to get file properties.\n";
+
 /* Get the page size  */
 int fileSize = stats.st_size;
 int pagesize = getpagesize();
 cout << endl << "page size is " << pagesize << "\n";
 /* map the file into memory */
+  lseek(closefd, fileSize - 1, SEEK_SET);
+  write(closefd,"", 1);
+  lseek(closefd, 0, SEEK_SET);
 
-  lseek(outFd, filesize - 1, SEEK_SET);
-  lseek(outFd, 0, SEEK_SET);
+  
+//initializing offset to equal 0
+
+off_t offset = 0;
 
 while(fileSize > 0){
     if(fileSize < pagesize){
@@ -70,8 +76,8 @@ cout << data[fIndex];
 }
 cout << endl;
 /* Write a string to the mapped region */
-char* mapped =(char*)mmap(NULL, pagesize,PROT_READ | PROT_WRITE | MAP_SHARED, closefd, 0);
-if (!mapped){
+char* dest =(char*)mmap(NULL, pagesize,PROT_READ | PROT_WRITE,MAP_SHARED, closefd, offset);
+if (dest == MAP_FAILED){
     cout <<"\n" << "mapping did not succeed" << "\n";
     exit(1);
 }
@@ -79,11 +85,11 @@ if (!mapped){
 /* memcpy(data, "Hello world, this is a test\n", sizeof("Hello world, this is a 
 test"));*/
 /* Unmap the shared memory region */
-memcpy(mapped, data, pagesize);
-munmap(mapped, pagesize);
+memcpy(data, dest, pagesize);
 munmap(data, pagesize);
+munmap(dest, pagesize);
 lseek(openfd, pagesize, SEEK_SET);
-lseek(closefd, pagesize, SEEK_SET)
+lseek(closefd, pagesize, SEEK_SET);
 
 
 /* Close the file */
