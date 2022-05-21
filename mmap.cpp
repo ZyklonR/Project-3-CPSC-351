@@ -44,7 +44,6 @@ int pagesize = getpagesize();
 cout << endl << "page size is " << pagesize << "\n";
 /* map the file into memory */
   lseek(closefd, fileSize - 1, SEEK_SET);
-  write(closefd,"", 1);
   lseek(closefd, 0, SEEK_SET);
 
   
